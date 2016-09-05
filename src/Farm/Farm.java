@@ -76,5 +76,4 @@ class Dog extends Animal{
 		System.out.print("I am a dog,");
 		super.SayName();
 	}
-	
 }
