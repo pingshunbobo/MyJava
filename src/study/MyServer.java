@@ -1,6 +1,8 @@
 package study;
 
 import java.net.*;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.io.*;
 import java.util.*;
 
@@ -23,10 +25,12 @@ public class MyServer
 		throws IOException
     {
 		ServerSocket ss = new ServerSocket(30001);
+		ServerSocketChannel serversocketChannel = ss.getChannel();
 		while(true)
 		{
 			// 此行代码会阻塞，将一直等待别人的连接
 			Socket s = ss.accept();
+			SocketChannel socketChannel = s.getChannel();
 			socketList.add(s);
 			// 每当客户端连接后启动一条ServerThread线程为该客户端服务
 			Thread th1 = new Thread(new ServerThread(s));
