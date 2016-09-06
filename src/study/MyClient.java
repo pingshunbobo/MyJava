@@ -6,7 +6,7 @@ import java.io.*;
 public class MyClient {
 	public static void main(String [] args){
 		String serverName = "127.0.0.1";
-		int port = 30001;
+		int port = 8088;
 		try
 	      {
 	         System.out.println("Connecting to " + serverName
