@@ -23,9 +23,9 @@ public class ServerThread implements Runnable
 	SocketChannel sc = null;
 	// 该线程所处理的Socket所对应的输入流
 	ByteBuffer buf = ByteBuffer.allocate(1024);
-	public ServerThread(Socket s) throws IOException
+	public ServerThread() throws IOException
 	{
-		this.sc = s.getChannel();		
+		this.sc = s.getChannel();
 	}
 	public void run()
 	{

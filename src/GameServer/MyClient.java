@@ -1,4 +1,4 @@
-package study;
+package GameServer;
 
 import java.net.*;
 import java.io.*;
@@ -32,8 +32,7 @@ public class MyClient {
 	     			in , "utf-8"));
 	         System.out.println("Server says :" + br.readLine());
 	         client.close();
-	      }
-		  catch(IOException e)
+	      }catch(IOException e)
 	      {
 	         e.printStackTrace();
 	      }
