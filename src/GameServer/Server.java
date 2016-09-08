@@ -11,23 +11,25 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
 public class Server {
-	static ByteBuffer buf = null;
+	static Selector selector;
+	static ArrayList <User> UserList 
+		= new ArrayList<User>();
+	
     public static void main(String[] args)
 		throws IOException
     {
-    	buf = ByteBuffer.allocate(1024);
     	//主函数中开启一个选择器，用于监听多事件。
-    	Selector selector = Selector.open();
+    	Server.selector = Selector.open();
+    	
         ServerSocketChannel server = ServerSocketChannel.open();
         server.configureBlocking(false);
         
@@ -54,20 +56,16 @@ public class Server {
 				SelectionKey key = keyIterator.next();
 				if(key.isAcceptable()) {
 					Socket s = socket.accept();
-				    	
-				    //创建socket Channel。
-				    SocketChannel socketch = SocketChannel.open(); 
-				    socketch = s.getChannel();
-				    socketch.configureBlocking(false);
-				    socketch.register(selector, SelectionKey.OP_READ);
+				    User NewUser = new User(s);
+				    UserList.add(NewUser);
 				  //System.out.println("isAcceptable");
 
 				} else if (key.isReadable()) {
-					Gameread((SocketChannel)key.channel(), selector);
+					Gameread(FindUser((SocketChannel)key.channel()));
 					//System.out.println("isReadable");
 					
 				} else if (key.isWritable()) {
-					GameWrite((SocketChannel)key.channel(), selector);
+					GameWrite(FindUser((SocketChannel)key.channel()));
 					//System.out.println("isWritable");
 					((SelectionKey) key).cancel();
 				}
@@ -76,33 +74,47 @@ public class Server {
 		}
 	}//end main function.   
     
-	static int Gameread(SocketChannel sc, Selector selector) throws IOException{
-    	
-    	int bytesRead = sc.read(buf);
+    
+    //读取socket数据。
+	static int Gameread(User user) throws IOException{
+		ByteBuffer buf = User.bufin;
+		
+    	int bytesRead = user.sc.read(buf);
 		while (bytesRead > 0) {
 			System.out.println("Read " + bytesRead);
 			
 			//将buf内容做屏幕输出。
 			buf.flip();
 			while(buf.hasRemaining()){
-				System.out.print((char) buf.get());
+				char ch = (char) buf.get();
+				buf.put((byte) ch);
 			}
-			buf.capacity();
-			bytesRead = sc.read(buf);
+			buf.clear();
+			bytesRead = user.sc.read(buf);
 		}
 		//System.out.println("read over!");
-	    sc.configureBlocking(false);
-	    sc.register(selector, SelectionKey.OP_WRITE);
+	    user.sc.configureBlocking(false);
+	    user.sc.register(Server.selector, SelectionKey.OP_WRITE);
 		return 0;
     }
     
-    static int GameWrite(SocketChannel sc, Selector selector) throws IOException{
-    	
+	//输出socket数据。
+    static int GameWrite(User user) throws IOException{
+    	ByteBuffer buf = User.bufout;
     	buf.flip();
-    	int byteswrite = sc.write(buf);
+    	int byteswrite = user.sc.write(buf);
 		System.out.println("Write " + byteswrite);
 		//System.out.println("Write over!");
 		buf.clear();
-		return 0;
+		return byteswrite;
+    }
+    
+    //通过socketchannel找到对应的User
+    static User FindUser(SocketChannel sc){
+    	for (Iterator<User> user = Server.UserList.iterator(); user.hasNext(); ){
+    		if(user.hashCode() == sc.hashCode() )
+    			return (User) user;
+    	}
+    	return null;
     }
 }
