@@ -20,9 +20,9 @@ public class MyClient {
 	         //发送数据到服务端。
 	         OutputStream outToServer = client.getOutputStream();
 	         DataOutputStream out =
-	                       new DataOutputStream(outToServer); 
+	                       new DataOutputStream(outToServer);
 	         out.writeUTF("Hello from "
-	                      + client.getLocalSocketAddress()+"\r\n");	         
+	                      + client.getLocalSocketAddress()+"\r\n");
 	         
 	         //接收来自服务端的数据
 	         InputStream inFromServer = client.getInputStream();

@@ -1,9 +1,7 @@
 package GameServer;
 
 import java.io.*;
-import java.net.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.SelectionKey;
 
 /**
  * Description:
@@ -18,61 +16,42 @@ import java.nio.channels.SocketChannel;
 // 负责处理每个线程通信的线程类
 public class ServerThread implements Runnable
 {
-	// 定义当前线程所处理的Socket
-	Socket s = null;
-	SocketChannel sc = null;
-	// 该线程所处理的Socket所对应的输入流
-	ByteBuffer buf = ByteBuffer.allocate(1024);
 	public ServerThread() throws IOException
 	{
-		this.sc = s.getChannel();
+		//System.out.println("A new thread.\n");
 	}
 	public void run()
 	{
-		try{
-			// 采用循环不断从Socket中读取客户端发送过来的数据
-			while ((readFromClient()) != -1){
-				try{
-					System.out.println("write");
-					this.sc.write(buf);
-				}
-				catch(SocketException e){
+		User user = null;
+		synchronized(Server.UserProcessQueue){
+			while(0 == Server.UserProcessQueue.size()){
+				try {
+					
+					//等待队列中的消息，并取得控制权。
+					Server.UserProcessQueue.wait();
+					user = Server.UserProcessQueue.poll();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
-					// 删除该Socket。
-					this.s.close();
 				}
+				
+				//正式处理客户请求。
+				ProcessData(user);
 			}
 		}
-		catch (IOException e){
-			e.printStackTrace();
-		}
-
 	}
-//定义读取客户端数据的方法
-	private int readFromClient() throws IOException
-	{
-		try
-		{
-			int bytesRead = this.sc.read(buf);
-			while (bytesRead != 0) {
-				System.out.println("Read " + bytesRead);
-				buf.flip();
-		
-				while(buf.hasRemaining()){
-					System.out.print((char) buf.get());
-				}
-				buf.clear();
-				bytesRead = this.sc.read(buf);
-			}
-			System.out.println("read over!");
-			return bytesRead;
-		}
-		// 如果捕捉到异常，表明该Socket对应的客户端已经关闭
-		catch (IOException e)
-		{
+	public void ProcessData(User user){
+		User.bufout.putChar('v');
+		User.bufout.putChar('v');
+		User.bufout.putChar('v');
+		User.bufout.putChar('v');
+		User.bufout.putChar('v');
+	    try {
+			user.sc.configureBlocking(false);
+		    user.sc.register(Server.selector, SelectionKey.OP_WRITE);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			s.close();
 		}
-		return -1;
 	}
 }

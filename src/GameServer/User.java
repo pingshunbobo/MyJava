@@ -1,3 +1,8 @@
+/*
+ * use hashmap storage user RemoteAddress -> data.
+ * 
+ * */
+
 package GameServer;
 
 import java.io.IOException;
@@ -11,22 +16,27 @@ public class User {
 	
 	SocketChannel sc=null;
 	SocketAddress sa=null;
-	int sahashCode = 0;
 	static ByteBuffer bufin = null;
 	static ByteBuffer bufout = null;
 
-	public User(Socket s) throws IOException {
+	public User(Socket s) {
 	    
 		//´´½¨socket Channel¡£
-	    SocketChannel socketch = SocketChannel.open();
-	    socketch = s.getChannel();
-	    socketch.configureBlocking(false);
-	    socketch.register(Server.selector, SelectionKey.OP_READ);
+		try{
+		    SocketChannel socketch = SocketChannel.open();
+		    socketch = s.getChannel();
+		    socketch.configureBlocking(false);
+		    socketch.register(Server.selector, SelectionKey.OP_READ);
+			sc = socketch;
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		}
 	    
-		sc = socketch;
-		sahashCode = sa.hashCode();
+		sa = s.getRemoteSocketAddress();
     	bufin = ByteBuffer.allocate(1024);
     	bufout = ByteBuffer.allocate(1024);
+    	System.out.println("New User!");
 	}
 
 }
