@@ -44,11 +44,11 @@ class Animal {
 	}
 	
 	public void SayAge(){
-		System.out.println("Hava "+age+" years old!");
+		System.out.println("I have "+age+" years old!");
 	}
 	
 	public void SayName(){
-		System.out.println("Name is "+name);
+		System.out.println("My name is "+name);
 	}
 	
 	public void Grew(int num){
