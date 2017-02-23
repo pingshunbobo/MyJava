@@ -36,7 +36,8 @@ public class User {
 		sa = s.getRemoteSocketAddress();
     	bufin = ByteBuffer.allocate(1024);
     	bufout = ByteBuffer.allocate(1024);
-    	System.out.println("New User!");
+    	System.out.print("New User @");
+	    System.out.println(s.getRemoteSocketAddress().toString());
 	}
 
 }

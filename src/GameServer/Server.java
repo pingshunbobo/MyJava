@@ -12,6 +12,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -23,65 +25,123 @@ import java.util.Queue;
 import java.util.Set;
 
 public class Server {
-	static Selector selector;
-	static HashMap< String , User> UserMap = 
-		      new HashMap< String, User>();
 	
+	//TCP 多路监听连接 
+	static Selector selector;
+	
+	//存储核心数据
+	static HashMap< String , User> usermap = 
+		      new HashMap< String, User>();
+
+	//任务队列，供线程池异步接受任务
 	static Queue <User> UserProcessQueue 
 		= new LinkedList<User>();
 	
-    public static void main(String[] args)
-		throws IOException
-    {
-    	//主函数中开启一个选择器，用于监听多事件。
-    	Server.selector = Selector.open();
+    public static void main(String[] args){
+    	//主线程中开启一个选择器，用于监听多事件。
+    	try {
+			Server.selector = Selector.open();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     	
-        ServerSocketChannel server = ServerSocketChannel.open();
-        server.configureBlocking(false);
-        
-		// 开启10个ServerThread线程为该客户端服务。
-        for(int i=0;i<10;i++){
-    		Thread NewThread = new Thread(new ServerThread());
-    		NewThread.start();
-        }
+        ServerSocketChannel server = null;
+		try {
+			server = ServerSocketChannel.open();
+	        server.configureBlocking(false);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		//创建线程池
+		ThreadPool();
   
         //绑定通道到指定端口  
         ServerSocket socket = server.socket();  
         InetSocketAddress address = new InetSocketAddress(8088);
-        socket.bind(address);
+        try {
+			socket.bind(address);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
         
         //向Selector中注册监听事件  
-        server.register(selector, SelectionKey.OP_ACCEPT);
+        try {
+			server.register(selector, SelectionKey.OP_ACCEPT);
+		} catch (ClosedChannelException e) {
+			System.out.println("Bind port error!");
+			e.printStackTrace();
+		}
         
 		while(true){
-			selector.select(3);	//阻塞等待。
+			try {
+				//阻塞等待。
+				selector.select(3);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			Set <SelectionKey> selectedKeys = selector.selectedKeys();
 			Iterator <SelectionKey> keyIterator = selectedKeys.iterator();
 			while(keyIterator.hasNext()) {
 				SelectionKey key = keyIterator.next();
 				if(key.isAcceptable()) {
-				    //System.out.println("isAcceptable");
-					Socket s = socket.accept();
-				    User NewUser = new User(s);
-				    UserMap.put(s.getRemoteSocketAddress().toString(),NewUser);
-
+				    System.out.println("isAcceptable");
+					Socket s = null;
+					try {
+						s = socket.accept();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				    User newuser = new User(s);
+				    usermap.put(s.getRemoteSocketAddress().toString(), newuser);
+				    
 				} else if (key.isReadable()) {
-					//System.out.println("isReadable");
-					GameRead(FindUser(((SocketChannel) key.channel()).getRemoteAddress()));
+					System.out.println("isReadable");
+					try {
+						GameRead(FindUser(((SocketChannel) key.channel()).getRemoteAddress()));
+					} catch (IOException e) {
+						((SelectionKey) key).cancel();						
+						GameClose(key.channel());
+					}
 					
 				} else if (key.isWritable()) {
-					//System.out.println("isWritable");
-					GameWrite(FindUser(((SocketChannel) key.channel()).getRemoteAddress()));
+					System.out.println("isWritable");
+					try {
+						GameWrite(FindUser( ((SocketChannel)key.channel()).getRemoteAddress() ));
+						key.channel().register(selector, SelectionKey.OP_READ);
+						System.out.println("read registe ok!");
+					} catch (IOException e) {
+							((SelectionKey) key).cancel();
+							GameClose(key.channel());
+					}
+				}else{
 					((SelectionKey) key).cancel();
+					GameClose(key.channel());
 				}
 				keyIterator.remove();
 			}
 		}
-	}//end main function.   
-    
-    
-    //读取数据。
+	}//End of main function.
+
+
+	private static void ThreadPool() {
+		// 开启10个ServerThread线程为该客户端服务。
+        for(int i=0;i<10;i++){
+    		Thread WorkThread = null;
+			try {
+				WorkThread = new Thread(new ServerThread());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    		WorkThread.start();
+        }
+	}
+
+
+	//读取数据。
 	static int GameRead(User user) throws IOException{
+    	int bytesRead = 0;
+    	
     	if(user.equals(null)){
     		System.out.println("Null user error!");
     		return -1;
@@ -89,21 +149,11 @@ public class Server {
 		
 		ByteBuffer buf = User.bufin;
 		
-    	int bytesRead = user.sc.read(buf);
+		bytesRead = user.sc.read(buf);
 		while (bytesRead > 0) {
 			System.out.println("Read " + bytesRead);
-			
-			//将buf内容做屏幕输出。
-			buf.flip();
-			while(buf.hasRemaining()){
-				char ch = (char) buf.get();
-				User.bufout.put((byte) ch);
-			}
-			buf.clear();
 			bytesRead = user.sc.read(buf);
 		}
-		//System.out.println("read over!");
-
 		//加入处理队列。
 		synchronized(UserProcessQueue){
 			UserProcessQueue.offer(user);
@@ -114,21 +164,30 @@ public class Server {
 	
 	//输出socket数据。
     static int GameWrite(User user) throws IOException{
+    	int byteswrites = 0;
+    	
     	if(user.equals(null)){
     		System.out.println("Null user error!");
     		return -1;
     	}
     	ByteBuffer buf = User.bufout;
     	buf.flip();
-    	int byteswrite = user.sc.write(buf);
-		System.out.println("Write " + byteswrite);
-		//System.out.println("Write over!");
+		byteswrites = user.sc.write(buf);
+		System.out.println("Write " + byteswrites);
 		buf.clear();
-		return byteswrite;
+		return byteswrites;
     }
     
-    //通过SocketAddress找到对应的User
-    static User FindUser(SocketAddress sa){
-    	return Server.UserMap.get(sa.toString());
+    private static void GameClose(SelectableChannel selectableChannel) {
+		try {
+			selectableChannel.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+    
+    //通过SocketAddress找到对应的User全局表数据。
+    static private User FindUser(SocketAddress sa){
+    	return Server.usermap.get(sa.toString());
     }
 }

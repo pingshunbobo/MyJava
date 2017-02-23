@@ -1,18 +1,9 @@
 package GameServer;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
-/**
- * Description:
- * <br/>网站: <a href="http://www.crazyit.org">疯狂Java联盟</a>
- * <br/>Copyright (C), 2001-2014, Yeeku.H.Lee
- * <br/>This program is protected by copyright laws.
- * <br/>Program Name:
- * <br/>Date:
- * @author  Yeeku.H.Lee kongyeeku@163.com
- * @version  1.0
- */
 // 负责处理每个线程通信的线程类
 public class ServerThread implements Runnable
 {
@@ -26,7 +17,6 @@ public class ServerThread implements Runnable
 		synchronized(Server.UserProcessQueue){
 			while(0 == Server.UserProcessQueue.size()){
 				try {
-					
 					//等待队列中的消息，并取得控制权。
 					Server.UserProcessQueue.wait();
 					user = Server.UserProcessQueue.poll();
@@ -36,16 +26,19 @@ public class ServerThread implements Runnable
 				}
 				
 				//正式处理客户请求。
-				ProcessData(user);
+				DataProcess(user);
 			}
 		}
 	}
-	public void ProcessData(User user){
-		User.bufout.putChar('v');
-		User.bufout.putChar('v');
-		User.bufout.putChar('v');
-		User.bufout.putChar('v');
-		User.bufout.putChar('v');
+	private void DataProcess(User user){		
+		ByteBuffer buf = User.bufin;
+		buf.flip();				//将buf内容做屏幕输出。
+		while(buf.hasRemaining()){
+			char ch = (char) buf.get();
+			User.bufout.put((byte) (ch + 1));
+		}
+		buf.clear();
+		
 	    try {
 			user.sc.configureBlocking(false);
 		    user.sc.register(Server.selector, SelectionKey.OP_WRITE);
