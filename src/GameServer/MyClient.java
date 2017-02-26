@@ -22,7 +22,7 @@ public class MyClient {
 	         DataOutputStream out =
 	                       new DataOutputStream(outToServer); 
 	         out.writeUTF("Hello from "
-	                      + client.getLocalSocketAddress()+"\r\n");	         
+	                      + client.getLocalSocketAddress()+"\r\n");        
 	         
 	         //接收来自服务端的数据
 	         InputStream inFromServer = client.getInputStream();

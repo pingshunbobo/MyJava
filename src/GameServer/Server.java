@@ -57,10 +57,10 @@ public class Server {
 		ThreadPool();
   
         //绑定通道到指定端口  
-        ServerSocket socket = server.socket();  
+        ServerSocket listensocket = server.socket();
         InetSocketAddress address = new InetSocketAddress(8088);
         try {
-			socket.bind(address);
+        	listensocket.bind(address);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -74,49 +74,38 @@ public class Server {
 		}
         
 		while(true){
-			try {
-				//阻塞等待。
-				selector.select(3);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			//阻塞等待。
+	        SocketSelect();
+	        
 			Set <SelectionKey> selectedKeys = selector.selectedKeys();
 			Iterator <SelectionKey> keyIterator = selectedKeys.iterator();
+			
 			while(keyIterator.hasNext()) {
 				SelectionKey key = keyIterator.next();
 				if(key.isAcceptable()) {
 				    System.out.println("isAcceptable");
-					Socket s = null;
-					try {
-						s = socket.accept();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				    User newuser = new User(s);
-				    usermap.put(s.getRemoteSocketAddress().toString(), newuser);
+					Socket sock = SocketAccept(listensocket);
+					String sockstr = sock.getRemoteSocketAddress().toString();
+				    User newuser = new User(sock);
+				    newuser.ReadRegister();
+				    usermap.put(sockstr, newuser);
 				    
 				} else if (key.isReadable()) {
 					System.out.println("isReadable");
-					try {
-						GameRead(FindUser(((SocketChannel) key.channel()).getRemoteAddress()));
-					} catch (IOException e) {
-						((SelectionKey) key).cancel();						
-						GameClose(key.channel());
-					}
+					
+					User user = FindUser(key);
+					SocketRead(user);
+					AttachProcesser(user);
 					
 				} else if (key.isWritable()) {
 					System.out.println("isWritable");
-					try {
-						GameWrite(FindUser( ((SocketChannel)key.channel()).getRemoteAddress() ));
-						key.channel().register(selector, SelectionKey.OP_READ);
-						System.out.println("read registe ok!");
-					} catch (IOException e) {
-							((SelectionKey) key).cancel();
-							GameClose(key.channel());
-					}
+					User user = FindUser(key);
+					SocketWrite(user);
+					user.ReadRegister();
+					
 				}else{
 					((SelectionKey) key).cancel();
-					GameClose(key.channel());
+					SocketClose(key.channel());
 				}
 				keyIterator.remove();
 			}
@@ -136,10 +125,27 @@ public class Server {
     		WorkThread.start();
         }
 	}
-
-
+	private static int SocketSelect(){
+		try {
+			selector.select(3);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return 0;
+		
+	}
+	private static Socket SocketAccept(ServerSocket listensocket){
+		Socket sock = null;
+		try {
+			sock = listensocket.accept();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return sock;
+	}
+	
 	//读取数据。
-	static int GameRead(User user) throws IOException{
+	static int SocketRead(User user){
     	int bytesRead = 0;
     	
     	if(user.equals(null)){
@@ -149,21 +155,25 @@ public class Server {
 		
 		ByteBuffer buf = User.bufin;
 		
-		bytesRead = user.sc.read(buf);
+		try {
+			bytesRead = user.sc.read(buf);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Read " + bytesRead);
 		while (bytesRead > 0) {
 			System.out.println("Read " + bytesRead);
-			bytesRead = user.sc.read(buf);
-		}
-		//加入处理队列。
-		synchronized(UserProcessQueue){
-			UserProcessQueue.offer(user);
-			UserProcessQueue.notify();
+			try {
+				bytesRead = user.sc.read(buf);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		return 0;
     }
 	
 	//输出socket数据。
-    static int GameWrite(User user) throws IOException{
+    static int SocketWrite(User user){
     	int byteswrites = 0;
     	
     	if(user.equals(null)){
@@ -172,13 +182,17 @@ public class Server {
     	}
     	ByteBuffer buf = User.bufout;
     	buf.flip();
-		byteswrites = user.sc.write(buf);
+		try {
+			byteswrites = user.sc.write(buf);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		System.out.println("Write " + byteswrites);
 		buf.clear();
 		return byteswrites;
     }
     
-    private static void GameClose(SelectableChannel selectableChannel) {
+    private static void SocketClose(SelectableChannel selectableChannel) {
 		try {
 			selectableChannel.close();
 		} catch (IOException e) {
@@ -187,7 +201,21 @@ public class Server {
 	}
     
     //通过SocketAddress找到对应的User全局表数据。
-    static private User FindUser(SocketAddress sa){
+    static private User FindUser(SelectionKey key){
+    	SocketAddress sa = null;
+		try {
+			sa = ((SocketChannel) key.channel()).getRemoteAddress();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     	return Server.usermap.get(sa.toString());
+    }
+    
+    static private void AttachProcesser(User user){
+		//加入处理队列。
+		synchronized(UserProcessQueue){
+			UserProcessQueue.offer(user);
+			UserProcessQueue.notify();
+		}
     }
 }
