@@ -3,7 +3,7 @@ package GameServer;
 import java.io.*;
 import java.nio.ByteBuffer;
 
-// ¸ºÔğ´¦ÀíÃ¿¸öÏß³ÌÍ¨ĞÅµÄÏß³ÌÀà
+//è´Ÿè´£å¤„ç†æ¯ä¸ªçº¿ç¨‹é€šä¿¡çš„çº¿ç¨‹ç±»
 public class ServerThread implements Runnable
 {
 	public ServerThread() throws IOException
@@ -16,14 +16,14 @@ public class ServerThread implements Runnable
 		synchronized(Server.UserProcessQueue){
 			while(0 == Server.UserProcessQueue.size()){
 				try {
-					//µÈ´ı¶ÓÁĞÖĞµÄÏûÏ¢£¬²¢È¡µÃ¿ØÖÆÈ¨¡£
+					//ç­‰å¾…é˜Ÿåˆ—ä¸­çš„æ¶ˆæ¯ï¼Œå¹¶å–å¾—æ§åˆ¶æƒã€‚
 					Server.UserProcessQueue.wait();
 					user = Server.UserProcessQueue.poll();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				
-				//ÕıÊ½´¦Àí¿Í»§ÇëÇó¡£
+				//æ­£å¼å¤„ç†å®¢æˆ·è¯·æ±‚ã€‚
 				DataProcess(user);
 			}
 		}
@@ -34,10 +34,10 @@ public class ServerThread implements Runnable
 		user.WriteRegister();
 	}
 	
-	//¼òµ¥½²ÊäÈë¸´ÖÆµ½Êä³ö¡£
+	//ç®€å•è®²è¾“å…¥å¤åˆ¶åˆ°è¾“å‡ºã€‚
 	private void DataEcho(User user){
 		ByteBuffer buf = User.bufin;
-		buf.flip();				//½«bufÄÚÈİ×öÆÁÄ»Êä³ö¡£
+		buf.flip();				//å°†bufå†…å®¹åšå±å¹•è¾“å‡ºã€‚
 		while(buf.hasRemaining()){
 			char ch = (char) buf.get();
 			User.bufout.put((byte) ch);

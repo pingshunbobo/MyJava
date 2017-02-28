@@ -1,6 +1,6 @@
 /*
  * main thread.
- * Íê³ÉĞÂtcpÁ¬½ÓºÍsocket io¡£
+ * ï¿½ï¿½ï¿½ï¿½ï¿½tcpï¿½ï¿½ï¿½Óºï¿½socket ioï¿½ï¿½
  * 
  * */
 
@@ -26,19 +26,19 @@ import java.util.Set;
 
 public class Server {
 	
-	//TCP ¶àÂ·¼àÌıÁ¬½Ó 
+	//TCP å¤šè·¯ç›‘å¬è¿æ¥
 	static Selector selector;
 	
-	//´æ´¢ºËĞÄÊı¾İ
+	//Hashè¡¨å­˜å‚¨æ ¸å¿ƒæ•°æ®
 	static HashMap< String , User> usermap = 
 		      new HashMap< String, User>();
 
-	//ÈÎÎñ¶ÓÁĞ£¬¹©Ïß³Ì³ØÒì²½½ÓÊÜÈÎÎñ
+	//ä»»åŠ¡é˜Ÿåˆ—ï¼Œä¾›çº¿ç¨‹æ± å¼‚æ­¥æ¥å—ä»»åŠ¡
 	static Queue <User> UserProcessQueue 
 		= new LinkedList<User>();
 	
     public static void main(String[] args){
-    	//Ö÷Ïß³ÌÖĞ¿ªÆôÒ»¸öÑ¡ÔñÆ÷£¬ÓÃÓÚ¼àÌı¶àÊÂ¼ş¡£
+    	//ä¸»çº¿ç¨‹ä¸­å¼€å¯ä¸€ä¸ªé€‰æ‹©å™¨ï¼Œç”¨äºç›‘å¬å¤šäº‹ä»¶ã€‚
     	try {
 			Server.selector = Selector.open();
 		} catch (IOException e) {
@@ -53,10 +53,10 @@ public class Server {
 			e.printStackTrace();
 		}
 
-		//´´½¨Ïß³Ì³Ø
+		//åˆ›å»ºçº¿ç¨‹æ± 
 		ThreadPool();
   
-        //°ó¶¨Í¨µÀµ½Ö¸¶¨¶Ë¿Ú  
+		//ç»‘å®šé€šé“åˆ°æŒ‡å®šç«¯å£ 
         ServerSocket listensocket = server.socket();
         InetSocketAddress address = new InetSocketAddress(8088);
         try {
@@ -65,17 +65,17 @@ public class Server {
 			e.printStackTrace();
 		}
         
-        //ÏòSelectorÖĞ×¢²á¼àÌıÊÂ¼ş  
+      //å‘Selectorä¸­æ³¨å†Œç›‘å¬äº‹ä»¶
         try {
 			server.register(selector, SelectionKey.OP_ACCEPT);
 		} catch (ClosedChannelException e) {
 			System.out.println("Bind port error!");
 			e.printStackTrace();
 		}
-        
-		while(true){
-			//×èÈûµÈ´ı¡£
-	        SocketSelect();
+
+        while(true){
+			//é˜»å¡ç­‰å¾…ã€‚
+			SocketSelect();
 	        
 			Set <SelectionKey> selectedKeys = selector.selectedKeys();
 			Iterator <SelectionKey> keyIterator = selectedKeys.iterator();
@@ -116,7 +116,7 @@ public class Server {
 
 
 	private static void ThreadPool() {
-		// ¿ªÆô10¸öServerThreadÏß³ÌÎª¸Ã¿Í»§¶Ë·şÎñ¡£
+		// å¼€å¯10ä¸ªServerThreadçº¿ç¨‹ä¸ºè¯¥å®¢æˆ·ç«¯æœåŠ¡ã€‚
         for(int i=0;i<10;i++){
     		Thread WorkThread = null;
 			try {
@@ -128,7 +128,7 @@ public class Server {
         }
 	}
 	
-	//¶Ôselect º¯ÊıµÄ·â×°¡£
+	//å¯¹select å‡½æ•°çš„å°è£…ã€‚
 	private static int SocketSelect(){
 		try {
 			selector.select(3);
@@ -139,7 +139,7 @@ public class Server {
 		
 	}
 	
-	//¶Ôacceptº¯ÊıµÄ·â×°¡£
+	//å¯¹acceptå‡½æ•°çš„å°è£…ã€‚
 	private static Socket SocketAccept(ServerSocket listensocket){
 		Socket sock = null;
 		try {
@@ -150,7 +150,7 @@ public class Server {
 		return sock;
 	}
 	
-	//¶ÁÈ¡Êı¾İµ½ÓÃ»§¿Õ¼ä¡£
+	//è¯»å–æ•°æ®åˆ°ç”¨æˆ·ç©ºé—´ã€‚
 	static int SocketRead(User user){
 		int ReadN = 0;
     	int ReadBytes = 0;
@@ -171,7 +171,7 @@ public class Server {
 		return ReadN;
     }
 	
-	//Êä³ösocketÊı¾İ¡£
+	//è¾“å‡ºæ•°æ®åˆ°socketã€‚
     static int SocketWrite(User user){
     	int byteswrites = 0;
     	
@@ -188,7 +188,7 @@ public class Server {
 		return byteswrites;
     }
     
-    //¹Ø±ÕSocketÁ¬½Ó¡£
+    //å…³é—­Socketè¿æ¥ã€‚
     private static void SocketClose(SelectableChannel selectableChannel) {
 		try {
 			selectableChannel.close();
@@ -197,7 +197,7 @@ public class Server {
 		}
 	}
     
-    //Í¨¹ıSocketAddressÕÒµ½¶ÔÓ¦µÄUserÈ«¾Ö±íÊı¾İ¡£
+    //Í¨é€šè¿‡SocketAddressæ‰¾åˆ°å¯¹åº”çš„Userå…¨å±€è¡¨æ•°æ®ã€‚
     static private User FindUser(SelectionKey key){
     	SocketAddress sa = null;
 		try {
@@ -209,7 +209,7 @@ public class Server {
     }
     
     static private void AttachProcesser(User user){
-		//¼ÓÈë´¦Àí¶ÓÁĞ,½»ÓÉÏß³Ì³Ø´¦Àí¡£
+    	//åŠ å…¥å¤„ç†é˜Ÿåˆ—,äº¤ç”±çº¿ç¨‹æ± å¤„ç†ã€‚
 		synchronized(UserProcessQueue){
 			UserProcessQueue.offer(user);
 			UserProcessQueue.notify();

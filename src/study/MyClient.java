@@ -8,7 +8,6 @@ public class MyClient {
 		try {
 			connect();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -22,18 +21,18 @@ public class MyClient {
 		{
 			client = new Socket(serverName, port);
 	        while(true){
-		        //Êä³öÁ¬½Ó³É¹¦ĞÅÏ¢
+	        	//è¾“å‡ºè¿æ¥æˆåŠŸä¿¡æ¯
 		        System.out.println("Just connected to "
 		        		+ client.getRemoteSocketAddress());
 		         
-		        //·¢ËÍÊı¾İµ½·şÎñ¶Ë¡£
+		      //å‘é€æ•°æ®åˆ°æœåŠ¡ç«¯ã€‚
 		        OutputStream outToServer = client.getOutputStream();
 		        DataOutputStream out =
 		                       new DataOutputStream(outToServer);
 		        out.writeUTF("Hello from "
 		        		+ client.getLocalSocketAddress() + "\r\n");
 
-		        //½ÓÊÕÀ´×Ô·şÎñ¶ËµÄÊı¾İ
+		      //æ¥æ”¶æ¥è‡ªæœåŠ¡ç«¯çš„æ•°æ®
 		        InputStream inFromServer = client.getInputStream();
 		        DataInputStream in =
 		        		new DataInputStream(inFromServer);
