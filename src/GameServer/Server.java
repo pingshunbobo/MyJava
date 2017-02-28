@@ -1,6 +1,6 @@
 /*
  * main thread.
- * �����tcp���Ӻ�socket io��
+ * 负责所有的 tcp 连接 和socket io
  * 
  * */
 
@@ -64,8 +64,8 @@ public class Server {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        
-      //向Selector中注册监听事件
+
+        //向Selector中注册监听事件
         try {
 			server.register(selector, SelectionKey.OP_ACCEPT);
 		} catch (ClosedChannelException e) {
@@ -94,10 +94,11 @@ public class Server {
 					System.out.println("isReadable");
 					
 					User user = FindUser(key);
-					int readn = SocketRead(user);
-					System.out.println("read: " + readn);
-					if(readn > 0)
-						AttachProcesser(user);
+					if( SocketRead(user) > 0 ){
+						NoticeProcesser(user);
+					}else{
+						SocketClose(key.channel());
+					}
 					
 				} else if (key.isWritable()) {
 					System.out.println("isWritable");
@@ -113,23 +114,9 @@ public class Server {
 			}
 		}
 	}//End of main function.
-
-
-	private static void ThreadPool() {
-		// 开启10个ServerThread线程为该客户端服务。
-        for(int i=0;i<10;i++){
-    		Thread WorkThread = null;
-			try {
-				WorkThread = new Thread(new ServerThread());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-    		WorkThread.start();
-        }
-	}
 	
 	//对select 函数的封装。
-	private static int SocketSelect(){
+	static int SocketSelect(){
 		try {
 			selector.select(3);
 		} catch (IOException e) {
@@ -140,7 +127,7 @@ public class Server {
 	}
 	
 	//对accept函数的封装。
-	private static Socket SocketAccept(ServerSocket listensocket){
+	static Socket SocketAccept(ServerSocket listensocket){
 		Socket sock = null;
 		try {
 			sock = listensocket.accept();
@@ -167,29 +154,29 @@ public class Server {
 			SocketClose(user.sc);
 			user.CancelRegister();
 		}
-		System.out.println("Read " + ReadN);
+		System.out.println("read " + ReadN);
 		return ReadN;
     }
 	
 	//输出数据到socket。
     static int SocketWrite(User user){
-    	int byteswrites = 0;
+    	int bytewrites = 0;
     	
     	ByteBuffer buf = User.bufout;
     	buf.flip();
 		try {
-			byteswrites = user.sc.write(buf);
+			bytewrites = user.sc.write(buf);
 		} catch (IOException e) {
 			SocketClose(user.sc);
 			user.CancelRegister();
 		}
-		System.out.println("Write " + byteswrites);
+		System.out.println("Write " + bytewrites);
 		buf.clear();
-		return byteswrites;
+		return bytewrites;
     }
     
     //关闭Socket连接。
-    private static void SocketClose(SelectableChannel selectableChannel) {
+    static void SocketClose(SelectableChannel selectableChannel) {
 		try {
 			selectableChannel.close();
 		} catch (IOException e) {
@@ -197,7 +184,7 @@ public class Server {
 		}
 	}
     
-    //ͨ通过SocketAddress找到对应的User全局表数据。
+    //ͨ通过SelectionKey找到对应的User全局表数据。
     static private User FindUser(SelectionKey key){
     	SocketAddress sa = null;
 		try {
@@ -208,11 +195,24 @@ public class Server {
     	return Server.usermap.get(sa.toString());
     }
     
-    static private void AttachProcesser(User user){
+    static private void NoticeProcesser(User user){
     	//加入处理队列,交由线程池处理。
 		synchronized(UserProcessQueue){
 			UserProcessQueue.offer(user);
 			UserProcessQueue.notify();
 		}
     }
+    
+	private static void ThreadPool() {
+		// 开启10个ServerThread线程为该客户端服务。
+        for(int i=0;i<10;i++){
+    		Thread WorkThread = null;
+			try {
+				WorkThread = new Thread(new ServerThread());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    		WorkThread.start();
+        }
+	}
 }

@@ -2,7 +2,7 @@
  * https://github.com/wojiushimogui/Selector
  * */
 
-package study;
+package NioTest;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -22,13 +22,13 @@ public class NIOClient {
 	}
 
 	private void init(String address,int port) throws IOException{
-		//¿Í»§¶Ë£¬Ê×ÏÈÓĞÒ»¸öSocketChannel
+		//ï¿½Í»ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½SocketChannel
 		SocketChannel socketChannel = SocketChannel.open();
-		socketChannel.configureBlocking(false);//½«´ËÍ¨µÀÉèÖÃÎª·Ç×èÈûÄ£Ê½
-		//Á¬½Ó
+		socketChannel.configureBlocking(false);//ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+		//ï¿½ï¿½ï¿½ï¿½
 		socketChannel.connect(new InetSocketAddress(address,port));
 		
-		//½«SocketChannel×¢²áµ½selectorÖĞ£¬²¢Îª¸ÃÍ¨µÀ×¢²áSelectionKey.OP_CONNECT
+		//ï¿½ï¿½SocketChannel×¢ï¿½áµ½selectorï¿½Ğ£ï¿½ï¿½ï¿½Îªï¿½ï¿½Í¨ï¿½ï¿½×¢ï¿½ï¿½SelectionKey.OP_CONNECT
 		socketChannel.register(selector, SelectionKey.OP_CONNECT);
 		
 		
@@ -50,29 +50,29 @@ public class NIOClient {
 			
 			while(ite.hasNext()){
 				SelectionKey selectionKey = (SelectionKey) ite.next();
-				ite.remove(); //É¾³ıÒÑÑ¡µÄkey,ÒÔ·ÀÖØ¸´´¦Àí
-				if(selectionKey.isConnectable()){//¿´ÊÇ·ñÓĞÁ¬½Ó·¢Éú
+				ite.remove(); //É¾ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½key,ï¿½Ô·ï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ï¿½ï¿½
+				if(selectionKey.isConnectable()){//ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó·ï¿½ï¿½ï¿½
 					SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
-					//Èç¹ûÕıÔÚÁ¬½Ó£¬ÔòÍê³ÉÁ¬½Ó
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					if(socketChannel.isConnectionPending()){
 						socketChannel.finishConnect();
 					}
-					socketChannel.configureBlocking(false);//ÉèÖÃÎª·Ç×èÈûÄ£Ê½
-					//¸ø·şÎñÆ÷¶Ë·¢ËÍÊı¾İ
-					System.out.println("¿Í»§¶ËÁ¬½ÓÉÏÁË·şÎñÆ÷¶Ë¡£¡£¡£¡£");
+					socketChannel.configureBlocking(false);//ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+					System.out.println("ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 
 					socketChannel.write(ByteBuffer.wrap(new String("hello server!").getBytes()));
-					//ÎªÁË½ÓÊÕÀ´×Ô·şÎñÆ÷¶ËµÄÊı¾İ£¬½«´ËÍ¨µÀ×¢²áµ½Ñ¡ÔñÆ÷ÖĞ
+					//Îªï¿½Ë½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½İ£ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½×¢ï¿½áµ½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					socketChannel.register(selector, SelectionKey.OP_READ);
 				}
 				else if(selectionKey.isReadable()){
 					SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
-					//½ÓÊÕÀ´×ÔÓÚ·şÎñÆ÷¶Ë·¢ËÍ¹ıÀ´µÄÊı¾İ
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë·ï¿½ï¿½Í¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					ByteBuffer buf = ByteBuffer.allocate(128);
 					socketChannel.read(buf);
 					byte[] receData = buf.array();
             		String msg = new String(receData).trim();
-            		System.out.println("½ÓÊÕÀ´×Ô·şÎñÆ÷¶ËµÄÊı¾İÎª£º"+msg);
+            		System.out.println("æ¥æ”¶æ¥è‡ªæœåŠ¡å™¨ç«¯çš„æ•°æ®ä¸ºï¼š"+msg);
             		buf.clear();
                 	socketChannel.write(ByteBuffer.wrap(new String(data+"").getBytes()));
                 	try {

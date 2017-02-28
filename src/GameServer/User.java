@@ -15,8 +15,8 @@ import java.nio.channels.SocketChannel;
 public class User {
 	
 	Socket so = null;
-	SocketChannel sc=null;
-	SocketAddress sa=null;
+	SocketChannel sc = null;
+	SocketAddress sa = null;
 	static ByteBuffer bufin = null;
 	static ByteBuffer bufout = null;
 
@@ -57,6 +57,7 @@ public class User {
 	public void WriteRegister(){
 		try{
 		    sc.register(Server.selector, SelectionKey.OP_WRITE);
+		    //sc.register(Server.selector, 0);
 		}
 		catch(IOException e){
 			e.printStackTrace();
