@@ -90,12 +90,14 @@ public class Server {
 				    newuser.ReadRegister();
 				    usermap.put(sockstr, newuser);
 				    
-				} else if (key.isReadable()) {
+				}  else if (key.isReadable()) {
 					System.out.println("isReadable");
 					
 					User user = FindUser(key);
-					SocketRead(user);
-					AttachProcesser(user);
+					int readn = SocketRead(user);
+					System.out.println("read: " + readn);
+					if(readn > 0)
+						AttachProcesser(user);
 					
 				} else if (key.isWritable()) {
 					System.out.println("isWritable");
@@ -103,7 +105,7 @@ public class Server {
 					SocketWrite(user);
 					user.ReadRegister();
 					
-				}else{
+				} else{
 					((SelectionKey) key).cancel();
 					SocketClose(key.channel());
 				}
@@ -125,6 +127,8 @@ public class Server {
     		WorkThread.start();
         }
 	}
+	
+	//对select 函数的封装。
 	private static int SocketSelect(){
 		try {
 			selector.select(3);
@@ -134,6 +138,8 @@ public class Server {
 		return 0;
 		
 	}
+	
+	//对accept函数的封装。
 	private static Socket SocketAccept(ServerSocket listensocket){
 		Socket sock = null;
 		try {
@@ -144,54 +150,45 @@ public class Server {
 		return sock;
 	}
 	
-	//读取数据。
+	//读取数据到用户空间。
 	static int SocketRead(User user){
-    	int bytesRead = 0;
-    	
-    	if(user.equals(null)){
-    		System.out.println("Null user error!");
-    		return -1;
-    	}
+		int ReadN = 0;
+    	int ReadBytes = 0;
 		
 		ByteBuffer buf = User.bufin;
 		
 		try {
-			bytesRead = user.sc.read(buf);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println("Read " + bytesRead);
-		while (bytesRead > 0) {
-			System.out.println("Read " + bytesRead);
-			try {
-				bytesRead = user.sc.read(buf);
-			} catch (IOException e) {
-				e.printStackTrace();
+			ReadBytes = user.sc.read(buf);
+			while (ReadBytes > 0) {
+				ReadN += ReadBytes;
+				ReadBytes = user.sc.read(buf);
 			}
+		} catch (IOException e) {
+			SocketClose(user.sc);
+			user.CancelRegister();
 		}
-		return 0;
+		System.out.println("Read " + ReadN);
+		return ReadN;
     }
 	
 	//输出socket数据。
     static int SocketWrite(User user){
     	int byteswrites = 0;
     	
-    	if(user.equals(null)){
-    		System.out.println("Null user error!");
-    		return -1;
-    	}
     	ByteBuffer buf = User.bufout;
     	buf.flip();
 		try {
 			byteswrites = user.sc.write(buf);
 		} catch (IOException e) {
-			e.printStackTrace();
+			SocketClose(user.sc);
+			user.CancelRegister();
 		}
 		System.out.println("Write " + byteswrites);
 		buf.clear();
 		return byteswrites;
     }
     
+    //关闭Socket连接。
     private static void SocketClose(SelectableChannel selectableChannel) {
 		try {
 			selectableChannel.close();
@@ -212,7 +209,7 @@ public class Server {
     }
     
     static private void AttachProcesser(User user){
-		//加入处理队列。
+		//加入处理队列,交由线程池处理。
 		synchronized(UserProcessQueue){
 			UserProcessQueue.offer(user);
 			UserProcessQueue.notify();

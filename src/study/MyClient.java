@@ -32,7 +32,6 @@ public class MyClient {
 		                       new DataOutputStream(outToServer);
 		        out.writeUTF("Hello from "
 		        		+ client.getLocalSocketAddress() + "\r\n");
-		        System.out.println("Client write over!");
 
 		        //接收来自服务端的数据
 		        InputStream inFromServer = client.getInputStream();
@@ -41,7 +40,6 @@ public class MyClient {
 		        BufferedReader br = new BufferedReader(new InputStreamReader(
 		     			in , "utf-8"));
 		        System.out.println("Server says :" + br.readLine());
-		        //Thread.sleep(1000);
 	         }
 	      }
 		  catch(IOException e)

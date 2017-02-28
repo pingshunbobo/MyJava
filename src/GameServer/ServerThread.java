@@ -20,7 +20,6 @@ public class ServerThread implements Runnable
 					Server.UserProcessQueue.wait();
 					user = Server.UserProcessQueue.poll();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
@@ -29,14 +28,20 @@ public class ServerThread implements Runnable
 			}
 		}
 	}
-	private void DataProcess(User user){		
+	
+	private void DataProcess(User user){
+		DataEcho(user);
+		user.WriteRegister();
+	}
+	
+	//简单讲输入复制到输出。
+	private void DataEcho(User user){
 		ByteBuffer buf = User.bufin;
 		buf.flip();				//将buf内容做屏幕输出。
 		while(buf.hasRemaining()){
 			char ch = (char) buf.get();
 			User.bufout.put((byte) ch);
 		}
-		buf.clear();	
-		user.WriteRegister();
+		buf.clear();
 	}
 }
