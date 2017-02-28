@@ -20,19 +20,23 @@ public class Client {
 		try
 		{
 			client = new Socket(serverName, port);
+        	//输出连接成功信息
+	        System.out.println("Just connected to "
+	        		+ client.getRemoteSocketAddress());
+	        
 	        while(true){
-	        	//输出连接成功信息
-		        System.out.println("Just connected to "
-		        		+ client.getRemoteSocketAddress());
-		         
-		      //发送数据到服务端。
+	        	//发送数据到服务端。
 		        OutputStream outToServer = client.getOutputStream();
 		        DataOutputStream out =
 		                       new DataOutputStream(outToServer);
-		        out.writeUTF("Hello from "
-		        		+ client.getLocalSocketAddress() + "\r\n");
+		        //产生一个随机数。
+		        java.util.Random RandomNumber = new java.util.Random();
+		        int RandomN = RandomNumber.nextInt(65535);
+		        
+		        System.out.print("Sent to erver: " + RandomN);
+		        out.writeBytes( String.valueOf( RandomN ) + "\r\n");
 
-		      //接收来自服务端的数据
+		        //接收来自服务端的数据
 		        InputStream inFromServer = client.getInputStream();
 		        DataInputStream in =
 		        		new DataInputStream(inFromServer);

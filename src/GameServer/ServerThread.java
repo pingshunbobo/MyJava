@@ -39,8 +39,8 @@ public class ServerThread implements Runnable
 		ByteBuffer buf = User.bufin;
 		buf.flip();				//将buf内容做屏幕输出。
 		while(buf.hasRemaining()){
-			char ch = (char) buf.get();
-			User.bufout.put((byte) ch);
+			//char ch = (char) buf.get();
+			User.bufout.put(buf.get());
 		}
 		buf.clear();
 	}

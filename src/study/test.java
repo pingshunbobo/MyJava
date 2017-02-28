@@ -1,5 +1,5 @@
 /*
- * »ù±¾IO·¶Àý
+ * ï¿½ï¿½ï¿½ï¿½IOï¿½ï¿½ï¿½ï¿½
  * 
  * */
 
@@ -16,6 +16,7 @@ public class test {
 		while(true){
 			str = br.readLine();
 			System.out.println (str.toUpperCase());
+			System.out.println (String.valueOf(10086));
 		}
 	}
 }
