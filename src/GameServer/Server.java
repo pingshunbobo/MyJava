@@ -95,8 +95,9 @@ public class Server {
 					
 					User user = FindUser(key);
 					if( SocketRead(user) > 0 ){
+						System.out.println("Notice!");
 						NoticeProcesser(user);
-					}else{
+					} else{
 						SocketClose(key.channel());
 					}
 					
@@ -139,23 +140,23 @@ public class Server {
 	
 	//读取数据到用户空间。
 	static int SocketRead(User user){
-		int ReadN = 0;
     	int ReadBytes = 0;
-		
+    	int ALLReads = 0;
 		ByteBuffer buf = User.bufin;
 		
 		try {
 			ReadBytes = user.sc.read(buf);
 			while (ReadBytes > 0) {
-				ReadN += ReadBytes;
+				ALLReads += ReadBytes;
 				ReadBytes = user.sc.read(buf);
 			}
 		} catch (IOException e) {
 			SocketClose(user.sc);
 			user.CancelRegister();
 		}
-		System.out.println("read " + ReadN);
-		return ReadN;
+		System.out.println("read " + ALLReads);
+		System.out.println(buf.asCharBuffer().toString());
+		return ALLReads;
     }
 	
 	//输出数据到socket。

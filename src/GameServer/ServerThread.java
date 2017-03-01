@@ -13,25 +13,30 @@ public class ServerThread implements Runnable
 	public void run()
 	{
 		User user = null;
-		synchronized(Server.UserProcessQueue){
 			while(0 == Server.UserProcessQueue.size()){
 				try {
-					//等待队列中的消息，并取得控制权。
-					Server.UserProcessQueue.wait();
-					user = Server.UserProcessQueue.poll();
+					synchronized(Server.UserProcessQueue){
+						//等待队列中的消息，并取得控制权。
+						Server.UserProcessQueue.wait();
+						user = Server.UserProcessQueue.poll();
+					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				
-				//正式处理客户请求。
-				DataProcess(user);
+				if (user.bufin.position() > 6){
+					System.out.println("Error!");
+				}else if(user.bufin.position() == 6){
+					//正式处理客户请求。
+					DataProcess(user);
+					user.WriteRegister();
+				}else
+					continue;
 			}
-		}
 	}
 	
 	private void DataProcess(User user){
 		DataEcho(user);
-		user.WriteRegister();
+		System.out.println("Write Register!");
 	}
 	
 	//简单讲输入复制到输出。
@@ -39,7 +44,6 @@ public class ServerThread implements Runnable
 		ByteBuffer buf = User.bufin;
 		buf.flip();				//将buf内容做屏幕输出。
 		while(buf.hasRemaining()){
-			//char ch = (char) buf.get();
 			User.bufout.put(buf.get());
 		}
 		buf.clear();

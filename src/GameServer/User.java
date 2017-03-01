@@ -13,19 +13,18 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 public class User {
-	
-	Socket so = null;
 	SocketChannel sc = null;
 	SocketAddress sa = null;
 	static ByteBuffer bufin = null;
 	static ByteBuffer bufout = null;
+	UserStatus status = UserStatus.READING;
 
 	public User(Socket s) {
-		this.so = s;
-		
 		sa = s.getRemoteSocketAddress();
-    	bufin = ByteBuffer.allocate(1024);
-    	bufout = ByteBuffer.allocate(1024);
+    	bufin = ByteBuffer.allocate(6);
+    	bufout = ByteBuffer.allocate(6);
+    	
+    	status = UserStatus.READING;
     	
     	SocketChannelOpen(s);
     	System.out.print("New User @");
@@ -57,7 +56,6 @@ public class User {
 	public void WriteRegister(){
 		try{
 		    sc.register(Server.selector, SelectionKey.OP_WRITE);
-		    //sc.register(Server.selector, 0);
 		}
 		catch(IOException e){
 			e.printStackTrace();
@@ -66,5 +64,9 @@ public class User {
 	
 	public void CancelRegister(){
 		sc.keyFor(Server.selector).cancel();
+	}
+	
+	private enum UserStatus{
+		READING,PROCESSING,WRITEING,ERROR
 	}
 }

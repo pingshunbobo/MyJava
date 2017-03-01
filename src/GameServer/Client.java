@@ -33,9 +33,10 @@ public class Client {
 		        java.util.Random RandomNumber = new java.util.Random();
 		        int RandomN = RandomNumber.nextInt(65535);
 		        
-		        System.out.print("Sent to erver: " + RandomN);
-		        out.writeBytes( String.valueOf( RandomN ) + "\r\n");
-
+		        System.out.print("Sent to erver: " + RandomN + "\t");
+		        out.writeBytes( (int)RandomN + "\r\n");
+		        //out.writeBytes( "abcd" + "\r\n");
+		        
 		        //接收来自服务端的数据
 		        InputStream inFromServer = client.getInputStream();
 		        DataInputStream in =
