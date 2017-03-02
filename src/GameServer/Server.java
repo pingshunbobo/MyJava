@@ -11,9 +11,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -93,23 +91,15 @@ public class Server {
 				}  else if (key.isReadable()) {
 					System.out.println("isReadable");
 					
-					User user = FindUser(key);
-					if( SocketRead(user) > 0 ){
-						System.out.println("Notice!");
-						NoticeProcesser(user);
-					} else{
-						SocketClose(key.channel());
-					}
+					FindUser(key).SocketRead();
 					
 				} else if (key.isWritable()) {
 					System.out.println("isWritable");
-					User user = FindUser(key);
-					SocketWrite(user);
-					user.ReadRegister();
+					FindUser(key).SocketWrite();
 					
 				} else{
-					((SelectionKey) key).cancel();
-					SocketClose(key.channel());
+					System.out.println("Select error!");
+					FindUser(key).SocketClose();
 				}
 				keyIterator.remove();
 			}
@@ -123,8 +113,7 @@ public class Server {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return 0;
-		
+		return 0;	
 	}
 	
 	//对accept函数的封装。
@@ -137,54 +126,14 @@ public class Server {
 		}
 		return sock;
 	}
-	
-	//读取数据到用户空间。
-	static int SocketRead(User user){
-    	int ReadBytes = 0;
-    	int ALLReads = 0;
-		ByteBuffer buf = User.bufin;
-		
-		try {
-			ReadBytes = user.sc.read(buf);
-			while (ReadBytes > 0) {
-				ALLReads += ReadBytes;
-				ReadBytes = user.sc.read(buf);
-			}
-		} catch (IOException e) {
-			SocketClose(user.sc);
-			user.CancelRegister();
-		}
-		System.out.println("read " + ALLReads);
-		System.out.println(buf.asCharBuffer().toString());
-		return ALLReads;
-    }
-	
-	//输出数据到socket。
-    static int SocketWrite(User user){
-    	int bytewrites = 0;
-    	
-    	ByteBuffer buf = User.bufout;
-    	buf.flip();
-		try {
-			bytewrites = user.sc.write(buf);
-		} catch (IOException e) {
-			SocketClose(user.sc);
-			user.CancelRegister();
-		}
-		System.out.println("Write " + bytewrites);
-		buf.clear();
-		return bytewrites;
-    }
     
-    //关闭Socket连接。
-    static void SocketClose(SelectableChannel selectableChannel) {
-		try {
-			selectableChannel.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+    static  void NoticeProcesser(User user){
+    	//加入处理队列,交由线程池处理。
+		synchronized(UserProcessQueue){
+			UserProcessQueue.offer(user);
+			UserProcessQueue.notify();
 		}
-	}
-    
+    }
     //ͨ通过SelectionKey找到对应的User全局表数据。
     static private User FindUser(SelectionKey key){
     	SocketAddress sa = null;
@@ -196,23 +145,11 @@ public class Server {
     	return Server.usermap.get(sa.toString());
     }
     
-    static private void NoticeProcesser(User user){
-    	//加入处理队列,交由线程池处理。
-		synchronized(UserProcessQueue){
-			UserProcessQueue.offer(user);
-			UserProcessQueue.notify();
-		}
-    }
-    
 	private static void ThreadPool() {
+		Thread WorkThread = null;
 		// 开启10个ServerThread线程为该客户端服务。
-        for(int i=0;i<10;i++){
-    		Thread WorkThread = null;
-			try {
-				WorkThread = new Thread(new ServerThread());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+        for(int i=0; i<10; i++){
+			WorkThread = new Thread(new ServerThread());
     		WorkThread.start();
         }
 	}

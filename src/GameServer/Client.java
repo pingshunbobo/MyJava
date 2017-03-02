@@ -23,19 +23,16 @@ public class Client {
         	//输出连接成功信息
 	        System.out.println("Just connected to "
 	        		+ client.getRemoteSocketAddress());
+	        client.setTcpNoDelay(false);
 	        
 	        while(true){
 	        	//发送数据到服务端。
 		        OutputStream outToServer = client.getOutputStream();
 		        DataOutputStream out =
 		                       new DataOutputStream(outToServer);
-		        //产生一个随机数。
-		        java.util.Random RandomNumber = new java.util.Random();
-		        int RandomN = RandomNumber.nextInt(65535);
-		        
-		        System.out.print("Sent to erver: " + RandomN + "\t");
-		        out.writeBytes( (int)RandomN + "\r\n");
-		        //out.writeBytes( "abcd" + "\r\n");
+
+		        //out.writeBytes( "abcd\r\n" );
+		        out.writeBytes( "abcd\r\n" + "abcd\r\n");
 		        
 		        //接收来自服务端的数据
 		        InputStream inFromServer = client.getInputStream();
@@ -44,7 +41,13 @@ public class Client {
 		        BufferedReader br = new BufferedReader(new InputStreamReader(
 		     			in , "utf-8"));
 		        System.out.println("Server says :" + br.readLine());
-		        
+
+		        /*
+		        try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}*/
 	         }
 	      }
 		  catch(IOException e)
