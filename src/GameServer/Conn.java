@@ -12,67 +12,79 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-public class User {
-	static SocketChannel sc = null;
-	static SocketAddress sa = null;
-	static ByteBuffer bufin = null;
-	static ByteBuffer bufout = null;
-	UserStatus status = UserStatus.READING;
+public class Conn {
+	SocketChannel sc = null;
+	SocketAddress sa = null;
+	ByteBuffer bufin = null;
+	ByteBuffer bufout = null;
+	ConnStatus status = null;
 
-	public User(Socket s) {
-		sa = s.getRemoteSocketAddress();
+	//初始化一个连接结构。
+	public Conn(Socket sock) {
+		sa = sock.getRemoteSocketAddress();
     	bufin = ByteBuffer.allocate(1024);
     	bufout = ByteBuffer.allocate(1024);
     	
-    	status = UserStatus.READING;
+    	status = ConnStatus.READING;
     	
-    	SocketChannelOpen(s);
+    	try {
+        	this.sc = sock.getChannel();
+			this.sc.configureBlocking(false);
+		    this.ReadRegister();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	    
     	System.out.print("New User @");
-	    System.out.println(s.getRemoteSocketAddress().toString());
+	    System.out.println(sock.getRemoteSocketAddress().toString());
 	}
+	
 	//读取数据到用户空间。
-	int SocketRead(){
+	int ConnRead(){
     	int ReadBytes = 0;
-		ByteBuffer buf = User.bufin;
+		ByteBuffer buf = this.bufin;
 		
 		try {
 			ReadBytes = sc.read(buf);
 			System.out.println("read " + ReadBytes); 
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		//判断返回值，注册事件
-		if( ReadBytes >= 0 ){
-			System.out.println("Notice!");
+		if( ReadBytes > 0 ){
+			System.out.println(ReadBytes + "Notice!");
 			Server.NoticeProcesser(this);
-		} else{
-			CancelRegister();
-			SocketClose();
+		} else if(ReadBytes < 0){
+			this.ConnClose();
+		}else{
+			//Do nothing!
 		}
 		return ReadBytes;
     }
 	
 	//输出数据到socket。
-    int SocketWrite(){
+    int ConnWrite(){
     	int bytewrites = 0;
     	
-    	ByteBuffer buf = User.bufout;
+    	ByteBuffer buf = this.bufout;
     	buf.flip();
 		try {
-			bytewrites = sc.write(buf);
+			bytewrites = this.sc.write(buf);
+			ReadRegister();
 		} catch (IOException e) {
+			this.ConnClose();
 			e.printStackTrace();
 		}
 		System.out.println("Write " + bytewrites);
 		buf.clear();
-		ReadRegister();
 		return bytewrites;
     }
     
     //关闭Socket连接。
-    void SocketClose() {
+    void ConnClose() {
 		try {
-			sc.close();
+			this.CancelRegister();
+			this.sc.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -82,54 +94,41 @@ public class User {
 		if(bufin.position() < 6){
 			return;
 		} else if(bufin.position() >= 6){
-			DataEcho();
+			this.DataEcho();
 		} else{
-			DataError();
+			this.DataError();
 		}
-		WriteRegister();
+		this.WriteRegister();
 		System.out.println("Write Register!");
 	}
 	
-	//简单讲输入复制到输出。
-	private static void DataEcho(){
+	//简单把输入复制到输出。
+	private void DataEcho(){
 		ByteBuffer buf = bufin;
 		buf.flip();				//将buf内容做屏幕输出。
 		while(buf.hasRemaining()){
-			User.bufout.put(buf.get());
+			this.bufout.put(buf.get());
 		}
 		buf.clear();
 	}
 	
-	private static void DataError(){
-		bufin.clear();
-		bufout.put("Error\r\n".getBytes());
-	}
-	
-	private void SocketChannelOpen(Socket s){
-	    SocketChannel socketch;
-	    
-		try {
-			socketch = SocketChannel.open();
-		    socketch = s.getChannel();
-		    socketch.configureBlocking(false);
-		    sc = socketch;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	private void DataError(){
+		this.bufin.clear();
+		this.bufout.put("Error\r\n".getBytes());
 	}
 	
 	public void ReadRegister(){
 		try{
-		    sc.register(Server.selector, SelectionKey.OP_READ);
+		    this.sc.register(Server.selector, SelectionKey.OP_READ);
 		}
 		catch(IOException e){
 			e.printStackTrace();
 		}
 	}
 	
-	public static void WriteRegister(){
+	public void WriteRegister(){
 		try{
-		    sc.register(Server.selector, SelectionKey.OP_WRITE);
+		    this.sc.register(Server.selector, SelectionKey.OP_WRITE);
 		}
 		catch(IOException e){
 			e.printStackTrace();
@@ -137,10 +136,10 @@ public class User {
 	}
 	
 	public void CancelRegister(){
-		sc.keyFor(Server.selector).cancel();
+		this.sc.keyFor(Server.selector).cancel();
 	}
 	
-	private enum UserStatus{
+	private enum ConnStatus{
 		READING,PROCESSING,WRITEING,ERROR
 	}
 }

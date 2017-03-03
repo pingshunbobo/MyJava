@@ -9,18 +9,18 @@ public class ServerThread implements Runnable
 	}
 	public void run()
 	{
-		User user = null;
-		synchronized(Server.UserProcessQueue){
+		Conn connecter = null;
+		synchronized(Server.ConnProcessQueue){
 			while(true){
 				try {
 						//等待队列中的消息，并取得控制权。
-						Server.UserProcessQueue.wait();
-						user = Server.UserProcessQueue.poll();
+						Server.ConnProcessQueue.wait();
+						connecter = Server.ConnProcessQueue.poll();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				//正式处理客户请求。
-				user.DataProcess();
+				connecter.DataProcess();
 			}
 		}
 	}

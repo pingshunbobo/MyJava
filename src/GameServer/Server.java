@@ -11,7 +11,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -26,48 +25,38 @@ public class Server {
 	
 	//TCP 多路监听连接
 	static Selector selector;
+    static ServerSocket listensocket = null;
+    static ServerSocketChannel server = null;
 	
 	//Hash表存储核心数据
-	static HashMap< String , User> usermap = 
-		      new HashMap< String, User>();
+	static HashMap< String , Conn> Connmap = 
+		      new HashMap< String, Conn>();
 
 	//任务队列，供线程池异步接受任务
-	static Queue <User> UserProcessQueue 
-		= new LinkedList<User>();
+	static Queue <Conn> ConnProcessQueue 
+		= new LinkedList<Conn>();
 	
     public static void main(String[] args){
-    	//主线程中开启一个选择器，用于监听多事件。
-    	try {
-			Server.selector = Selector.open();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    	
-        ServerSocketChannel server = null;
-		try {
-			server = ServerSocketChannel.open();
+        try {
+        	//主线程中开启一个选择器，用于监听多事件。
+			selector = Selector.open();
+        	
+			//创建线程池
+			ThreadPool();
+	        
+			//创建套接字连接
+        	server = ServerSocketChannel.open();
 	        server.configureBlocking(false);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		//创建线程池
-		ThreadPool();
-  
-		//绑定通道到指定端口 
-        ServerSocket listensocket = server.socket();
-        InetSocketAddress address = new InetSocketAddress(8088);
-        try {
+	        
+    		//绑定通道到指定端口 
+            listensocket = server.socket();
+            InetSocketAddress address = new InetSocketAddress(8088);
         	listensocket.bind(address);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-        //向Selector中注册监听事件
-        try {
+        	
+            //向Selector中注册监听事件
 			server.register(selector, SelectionKey.OP_ACCEPT);
-		} catch (ClosedChannelException e) {
-			System.out.println("Bind port error!");
+		} catch (IOException e) {
+			System.out.println("Create bind port error!");
 			e.printStackTrace();
 		}
 
@@ -84,22 +73,19 @@ public class Server {
 				    System.out.println("isAcceptable");
 					Socket sock = SocketAccept(listensocket);
 					String sockstr = sock.getRemoteSocketAddress().toString();
-				    User newuser = new User(sock);
-				    newuser.ReadRegister();
-				    usermap.put(sockstr, newuser);
+				    Conn newConn = new Conn(sock);
+				    Connmap.put(sockstr, newConn);
 				    
-				}  else if (key.isReadable()) {
-					System.out.println("isReadable");
-					
-					FindUser(key).SocketRead();
-					
 				} else if (key.isWritable()) {
 					System.out.println("isWritable");
-					FindUser(key).SocketWrite();
+					FindConn(key).ConnWrite();
+					
+				} else if (key.isReadable()) {
+					System.out.println("isReadable");
+					FindConn(key).ConnRead();
 					
 				} else{
-					System.out.println("Select error!");
-					FindUser(key).SocketClose();
+					//LOG.error();
 				}
 				keyIterator.remove();
 			}
@@ -107,13 +93,12 @@ public class Server {
 	}//End of main function.
 	
 	//对select 函数的封装。
-	static int SocketSelect(){
+	static void SocketSelect(){
 		try {
 			selector.select(3);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return 0;	
 	}
 	
 	//对accept函数的封装。
@@ -127,22 +112,22 @@ public class Server {
 		return sock;
 	}
     
-    static  void NoticeProcesser(User user){
+    static  void NoticeProcesser(Conn Conn){
     	//加入处理队列,交由线程池处理。
-		synchronized(UserProcessQueue){
-			UserProcessQueue.offer(user);
-			UserProcessQueue.notify();
+		synchronized(ConnProcessQueue){
+			ConnProcessQueue.offer(Conn);
+			ConnProcessQueue.notify();
 		}
     }
-    //ͨ通过SelectionKey找到对应的User全局表数据。
-    static private User FindUser(SelectionKey key){
+    //ͨ通过SelectionKey找到对应的Conn全局表数据。
+    private static Conn FindConn(SelectionKey key){
     	SocketAddress sa = null;
 		try {
 			sa = ((SocketChannel) key.channel()).getRemoteAddress();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-    	return Server.usermap.get(sa.toString());
+    	return Server.Connmap.get(sa.toString());
     }
     
 	private static void ThreadPool() {
