@@ -113,6 +113,7 @@ public class Server {
 	}
     
     static  void NoticeProcesser(Conn Conn){
+    	//System.out.println("notice !" + ConnProcessQueue.size());
     	//加入处理队列,交由线程池处理。
 		synchronized(ConnProcessQueue){
 			ConnProcessQueue.offer(Conn);
@@ -133,7 +134,7 @@ public class Server {
 	private static void ThreadPool() {
 		Thread WorkThread = null;
 		// 开启10个ServerThread线程为该客户端服务。
-        for(int i=0; i<10; i++){
+        for(int i=0; i<8; i++){
 			WorkThread = new Thread(new ServerThread());
     		WorkThread.start();
         }

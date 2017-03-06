@@ -11,18 +11,20 @@ public class ServerThread implements Runnable
 	public void run()
 	{
 		Conn connecter = null;
-		synchronized(Server.ConnProcessQueue){
-			while(true){
-				try {
-					//等待队列中的消息，并取得控制权。
-					Server.ConnProcessQueue.wait();
-					connecter = Server.ConnProcessQueue.poll();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+		while(true){
+			synchronized(Server.ConnProcessQueue){
+				if( 0 == Server.ConnProcessQueue.size() )
+					try {
+						//等待队列中的消息，并取得控制权。
+							Server.ConnProcessQueue.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
 				}
-				//正式处理客户请求。
-				connecter.DataProcess();
+				connecter = Server.ConnProcessQueue.poll();
 			}
+			//正式处理客户请求。
+			if(connecter != null)
+				connecter.DataProcess();
 		}
 	}
 	

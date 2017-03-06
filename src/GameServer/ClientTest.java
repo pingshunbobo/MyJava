@@ -7,7 +7,7 @@ public class ClientTest {
 		
 		System.out.println("Client Test!");
 
-        for(int i=0; i<100; i++){
+        for(int i=0; i<10000; i++){
 			WorkThread = new Thread(new ClientThread(i));
     		WorkThread.start();
         };

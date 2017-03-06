@@ -17,8 +17,8 @@ public class ClientThread implements Runnable
 		try {
 			conn.TalkToServer();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			conn.CloseConn();
+			//e.printStackTrace();
 		}
 	}
 	

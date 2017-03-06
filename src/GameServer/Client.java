@@ -12,9 +12,8 @@ public class Client {
 	public Client(int id) {
 		try {
 			this.id = id;
-	        System.out.println("Connecting to " + serverName
-	                + " on port " + port);
-	        
+	        //System.out.println("Connecting to " + serverName
+	          //      + " on port " + port);
 			this.connsocket = new Socket(serverName, port);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -39,6 +38,14 @@ public class Client {
 					in , "utf-8"));
 			
 			System.out.println(this.id + ": Server says :" + br.readLine());
+		}
+	}
+	
+	public void CloseConn(){
+		try {
+			connsocket.close();
+		} catch (IOException e) {
+			//e.printStackTrace();
 		}
 	}
 }

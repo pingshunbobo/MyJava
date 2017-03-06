@@ -35,8 +35,8 @@ public class Conn {
 			e.printStackTrace();
 		}
 	    
-    	System.out.print("New User @");
-	    System.out.println(sock.getRemoteSocketAddress().toString());
+    	//System.out.print("New User @");
+	    //System.out.println(sock.getRemoteSocketAddress().toString());
 	}
 	
 	//读取数据到用户空间。
