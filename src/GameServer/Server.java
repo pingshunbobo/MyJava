@@ -29,11 +29,11 @@ public class Server {
     static ServerSocketChannel server = null;
 	
 	//Hash表存储核心数据
-	static HashMap< String , Conn> Connmap = 
+	static HashMap< String , Conn> Connmap =
 		      new HashMap< String, Conn>();
 
 	//任务队列，供线程池异步接受任务
-	static Queue <Conn> ConnProcessQueue 
+	static Queue <Conn> ConnProcessQueue
 		= new LinkedList<Conn>();
 	
     public static void main(String[] args){
@@ -70,18 +70,18 @@ public class Server {
 			while(keyIterator.hasNext()) {
 				SelectionKey key = keyIterator.next();
 				if(key.isAcceptable()) {
-				    System.out.println("isAcceptable");
+				    //System.out.println("isAcceptable");
 					Socket sock = SocketAccept(listensocket);
 					String sockstr = sock.getRemoteSocketAddress().toString();
 				    Conn newConn = new Conn(sock);
 				    Connmap.put(sockstr, newConn);
 				    
 				} else if (key.isWritable()) {
-					System.out.println("isWritable");
+					//System.out.println("isWritable");
 					FindConn(key).ConnWrite();
 					
 				} else if (key.isReadable()) {
-					System.out.println("isReadable");
+					//System.out.println("isReadable");
 					FindConn(key).ConnRead();
 					
 				} else{
@@ -95,7 +95,7 @@ public class Server {
 	//对select 函数的封装。
 	static void SocketSelect(){
 		try {
-			selector.select(3);
+			selector.select(1000);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -127,7 +127,7 @@ public class Server {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-    	return Server.Connmap.get(sa.toString());
+    	return Connmap.get(sa.toString());
     }
     
 	private static void ThreadPool() {

@@ -46,13 +46,13 @@ public class Conn {
 		
 		try {
 			ReadBytes = sc.read(buf);
-			System.out.println("read " + ReadBytes); 
+			//System.out.println("read " + ReadBytes);
 		} catch (IOException e) {
 			//e.printStackTrace();
 		}
 		//判断返回值，注册事件
 		if( ReadBytes > 0 ){
-			System.out.println(ReadBytes + "Notice!");
+			//Notice thread to process.
 			Server.NoticeProcesser(this);
 		} else if(ReadBytes < 0){
 			this.ConnClose();
@@ -70,12 +70,12 @@ public class Conn {
     	buf.flip();
 		try {
 			bytewrites = this.sc.write(buf);
-			ReadRegister();
+			this.ReadRegister();
 		} catch (IOException e) {
 			this.ConnClose();
 			e.printStackTrace();
 		}
-		System.out.println("Write " + bytewrites);
+		//System.out.println("Write " + bytewrites);
 		buf.clear();
 		return bytewrites;
     }
@@ -99,12 +99,11 @@ public class Conn {
 			this.DataError();
 		}
 		this.WriteRegister();
-		System.out.println("Write Register!");
 	}
 	
 	//简单把输入复制到输出。
 	private void DataEcho(){
-		ByteBuffer buf = bufin;
+		ByteBuffer buf = this.bufin;
 		buf.flip();				//将buf内容做屏幕输出。
 		while(buf.hasRemaining()){
 			this.bufout.put(buf.get());
@@ -118,8 +117,10 @@ public class Conn {
 	}
 	
 	public void ReadRegister(){
+		//System.out.println("Read Register!");
 		try{
-		    this.sc.register(Server.selector, SelectionKey.OP_READ);
+			if(this.sc.isConnected())
+				this.sc.register(Server.selector, SelectionKey.OP_READ);
 		}
 		catch(IOException e){
 			e.printStackTrace();
@@ -127,8 +128,10 @@ public class Conn {
 	}
 	
 	public void WriteRegister(){
+		//System.out.println("Write Register!");
 		try{
-		    this.sc.register(Server.selector, SelectionKey.OP_WRITE);
+			if(this.sc.isConnected())
+				this.sc.register(Server.selector, SelectionKey.OP_WRITE);
 		}
 		catch(IOException e){
 			e.printStackTrace();
@@ -136,7 +139,8 @@ public class Conn {
 	}
 	
 	public void CancelRegister(){
-		this.sc.keyFor(Server.selector).cancel();
+		if(this.sc.isRegistered())
+			this.sc.keyFor(Server.selector).cancel();
 	}
 	
 	private enum ConnStatus{
