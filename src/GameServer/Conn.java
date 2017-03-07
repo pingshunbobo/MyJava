@@ -34,9 +34,7 @@ public class Conn {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	    
-    	//System.out.print("New User @");
-	    //System.out.println(sock.getRemoteSocketAddress().toString());
+    	
 	}
 	
 	//读取数据到用户空间。
@@ -45,19 +43,26 @@ public class Conn {
 		ByteBuffer buf = this.bufin;
 		
 		try {
-			ReadBytes = sc.read(buf);
-			//System.out.println("read " + ReadBytes);
+			ReadBytes = this.sc.read(buf);
 		} catch (IOException e) {
 			//e.printStackTrace();
 		}
 		//判断返回值，注册事件
 		if( ReadBytes > 0 ){
-			//Notice thread to process.
+			//消息处理过程中，不再关注socket 读事件。
+			//这样处理会导致收不到客户端关闭的事件,产生大量CLOSE_WAIT状态。
+			//this.NoRegister();
 			Server.NoticeProcesser(this);
 		} else if(ReadBytes < 0){
 			this.ConnClose();
 		}else{
-			//Do nothing!
+			System.out.println("buf reamain: " + this.bufin.remaining());
+			try {
+				Thread.sleep(100000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		return ReadBytes;
     }
@@ -68,14 +73,14 @@ public class Conn {
     	
     	ByteBuffer buf = this.bufout;
     	buf.flip();
-		try {
-			bytewrites = this.sc.write(buf);
-			this.ReadRegister();
-		} catch (IOException e) {
-			this.ConnClose();
-			e.printStackTrace();
-		}
-		//System.out.println("Write " + bytewrites);
+    	if(this.sc.isOpen()){
+    		try {
+    			bytewrites = this.sc.write(buf);
+    			this.ReadRegister();
+    		} catch (IOException e) {
+    			this.ConnClose();
+    		}
+    	}
 		buf.clear();
 		return bytewrites;
     }
@@ -117,7 +122,6 @@ public class Conn {
 	}
 	
 	public void ReadRegister(){
-		//System.out.println("Read Register!");
 		try{
 			if(this.sc.isConnected())
 				this.sc.register(Server.selector, SelectionKey.OP_READ);
@@ -128,18 +132,25 @@ public class Conn {
 	}
 	
 	public void WriteRegister(){
-		//System.out.println("Write Register!");
 		try{
-			if(this.sc.isConnected())
+			if(!this.sc.socket().isClosed())
 				this.sc.register(Server.selector, SelectionKey.OP_WRITE);
 		}
 		catch(IOException e){
 			e.printStackTrace();
 		}
 	}
-	
+	public void NoRegister(){
+		try{
+			if(!this.sc.socket().isClosed())
+				this.sc.register(Server.selector, 0);
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		};
+	}
 	public void CancelRegister(){
-		if(this.sc.isRegistered())
+		if(this.sc.isOpen())
 			this.sc.keyFor(Server.selector).cancel();
 	}
 	

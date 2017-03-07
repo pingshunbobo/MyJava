@@ -3,9 +3,10 @@ package GameServer;
 //负责处理每个线程通信的线程类
 public class ServerThread implements Runnable
 {
-	public ServerThread()
+	int Thread_id = 0;
+	public ServerThread(int id)
 	{
-		//System.out.println("A new thread.\n");
+		this.Thread_id = id;
 	}
 	
 	public void run()
@@ -24,7 +25,9 @@ public class ServerThread implements Runnable
 			}
 			//正式处理客户请求。
 			if(connecter != null)
-				connecter.DataProcess();
+				synchronized(connecter){
+						connecter.DataProcess();
+				}
 		}
 	}
 	

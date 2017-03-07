@@ -1,25 +1,24 @@
 package GameServer;
 
-import java.io.IOException;
-
 //负责处理每个线程通信的线程类
 public class ClientThread implements Runnable
 {
 	int thread_id = 0;
-	public ClientThread(int id)
+	int connect_times = 0;
+	int request_count = 0;
+	
+	public ClientThread(int id, int times, int count) 
 	{
-		thread_id = id;
-		//System.out.println("A new thread.\n");
+		this.thread_id = id;
+		this.connect_times = times;
+		this.request_count = count;
 	}
+	
 	public void run()
 	{
-		Client conn = new Client(thread_id);
-		try {
-			conn.TalkToServer();
-		} catch (IOException e) {
-			conn.CloseConn();
-			//e.printStackTrace();
-		}
+		Client cli = new Client(thread_id, connect_times, request_count);
+		cli.work();
+		System.out.println("Thread " + this.thread_id + " work over!");
 	}
 	
 }

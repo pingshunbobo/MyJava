@@ -77,12 +77,14 @@ public class Server {
 				    Connmap.put(sockstr, newConn);
 				    
 				} else if (key.isWritable()) {
-					//System.out.println("isWritable");
-					FindConn(key).ConnWrite();
+					synchronized(FindConn(key)){
+						FindConn(key).ConnWrite();	
+					}
 					
 				} else if (key.isReadable()) {
-					//System.out.println("isReadable");
-					FindConn(key).ConnRead();
+					synchronized(FindConn(key)){
+						FindConn(key).ConnRead();	
+					}
 					
 				} else{
 					//LOG.error();
@@ -113,7 +115,6 @@ public class Server {
 	}
     
     static  void NoticeProcesser(Conn Conn){
-    	//System.out.println("notice !" + ConnProcessQueue.size());
     	//加入处理队列,交由线程池处理。
 		synchronized(ConnProcessQueue){
 			ConnProcessQueue.offer(Conn);
@@ -134,8 +135,8 @@ public class Server {
 	private static void ThreadPool() {
 		Thread WorkThread = null;
 		// 开启10个ServerThread线程为该客户端服务。
-        for(int i=0; i<8; i++){
-			WorkThread = new Thread(new ServerThread());
+        for(int i = 0; i < 8; i++) {
+			WorkThread = new Thread(new ServerThread(i));
     		WorkThread.start();
         }
 	}

@@ -1,15 +1,34 @@
 package GameServer;
 
-
 public class ClientTest {
 	public static void main(String [] args) {
-		Thread WorkThread = null;
-		
-		System.out.println("Client Test!");
+		int connects = 0;
+		int counts = 0;
+		Thread[] WorkThread = new Thread[10];
+		System.out.println("!!!Client test start!!!!");
 
-        for(int i=0; i<10000; i++){
-			WorkThread = new Thread(new ClientThread(i));
-    		WorkThread.start();
+		if(args.length != 3){
+			System.out.println("Usage: ClientTest conns times");
+			return;
+		}
+		connects = Integer.parseInt(args[0]);
+		counts = Integer.parseInt(args[1]);
+
+		//根据参数，建立连接组
+        for(int i=0; i<10; i++){
+    		WorkThread[i] = new Thread(new ClientThread(i, connects, counts));
+    		WorkThread[i].start();
         };
+        
+        //等待所有线程结束！
+        for(int i=0; i<10; i++){
+        	try {
+				WorkThread[i].join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+        }  
+        
+        System.out.println("!!!CLIENT TEST OVER!!!");
 	}
 }
