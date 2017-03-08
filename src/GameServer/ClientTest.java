@@ -1,34 +1,43 @@
 package GameServer;
 
 public class ClientTest {
+	static int port = 8088;
+	static String serverName = null;
+	
 	public static void main(String [] args) {
 		int connects = 0;
 		int counts = 0;
-		Thread[] WorkThread = new Thread[10];
+		
 		System.out.println("!!!Client test start!!!!");
+		long startTime = System.currentTimeMillis();
 
-		if(args.length != 2){
-			System.out.println("Usage: ClientTest conns times");
+		if(args.length != 3){
+			System.out.println("Usage: ClientTest ServerIP connectors requests");
 			return;
 		}
-		connects = Integer.parseInt(args[0]);
-		counts = Integer.parseInt(args[1]);
+		
+		ClientTest.serverName = args[0];
+		connects = Integer.parseInt(args[1]);
+		counts = Integer.parseInt(args[2]);
+		
+		Thread[] WorkThread = new Thread[connects];
 
 		//根据参数，建立线程组
-        for(int i=0; i<10; i++){
-    		WorkThread[i] = new Thread(new ClientThread(i, connects, counts));
+        for(int i = 0; i < connects; i++){
+    		WorkThread[i] = new Thread(new ClientThread(i, counts));
     		WorkThread[i].start();
         };
         
         //等待所有线程结束！
-        for(int i=0; i<10; i++){
+        for(int i=0; i<connects; i++){
         	try {
 				WorkThread[i].join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
         }  
-        
+        long endTime = System.currentTimeMillis();
         System.out.println("!!!CLIENT TEST OVER!!!");
+        System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
 	}
 }

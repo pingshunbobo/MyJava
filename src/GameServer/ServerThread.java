@@ -17,7 +17,7 @@ public class ServerThread implements Runnable
 				if( 0 == Server.ConnProcessQueue.size() )
 					try {
 						//等待队列中的消息，并取得控制权。
-							Server.ConnProcessQueue.wait();
+						Server.ConnProcessQueue.wait();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 				}

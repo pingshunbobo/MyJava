@@ -4,21 +4,18 @@ package GameServer;
 public class ClientThread implements Runnable
 {
 	int thread_id = 0;
-	int connect_times = 0;
-	int request_count = 0;
+	int request_counts = 0;
 	
-	public ClientThread(int id, int times, int count) 
+	public ClientThread(int id, int times)
 	{
 		this.thread_id = id;
-		this.connect_times = times;
-		this.request_count = count;
+		this.request_counts = times;
 	}
 	
 	public void run()
 	{
-		Client cli = new Client(thread_id, connect_times, request_count);
+		Client cli = new Client(thread_id, request_counts);
 		cli.work();
-		System.out.println("Thread " + this.thread_id + " work over!");
 	}
 	
 }

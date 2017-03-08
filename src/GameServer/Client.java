@@ -6,30 +6,24 @@ import java.io.*;
 
 public class Client {
 	int ClientId = 0 ;
-	int connect_times = 0;
 	int request_count = 0;
 	
-	int port = 8088;
-	String serverName = "127.0.0.1";
-	
-	public Client(int id, int Counts, int Times) {
+	public Client(int id, int counts) {
 		this.ClientId = id;
-		this.connect_times = Counts;
-		this.request_count = Times;
+		this.request_count = counts;
 	}
 	
 	public void work(){
-		//建立 connectCount个连接。
-		for(int i = 0; i < this.connect_times; i++){
-			System.out.println(i);
-			this.connect();
-		}
-	}
-	
-	//建立一个socket连接 
-	public void connect(){
 		try {
-			Socket conn = new Socket(serverName, port);
+			Random random = new Random();
+			Thread.sleep(random.nextInt(65535)%10);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		//建立一个socket连接，并完成交互任务
+		try {
+			Socket conn = new Socket(ClientTest.serverName, ClientTest.port);
 			this.TalkToServer(conn);
 			conn.close();
 		} catch (IOException e) {
@@ -53,14 +47,6 @@ public class Client {
 					new DataInputStream(inFromServer);
 			BufferedReader br = new BufferedReader(new InputStreamReader(
 					in , "utf-8"));
-			
-			//System.out.println("Server says :" + br.readLine());
-			try {
-				Random random = new Random();
-				Thread.sleep(random.nextInt(65535)%10);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 	

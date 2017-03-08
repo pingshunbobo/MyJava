@@ -54,13 +54,7 @@ public class Conn {
 		} else if(ReadBytes < 0){
 			this.ConnClose();
 		}else{
-			/*Debug_out("buf reamain: " + this.bufin.remaining());
-			try {
-				Thread.sleep(100000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
+			//Debug_out("buf reamain: " + this.bufin.remaining());
 		}
 		return ReadBytes;
     }
@@ -88,12 +82,14 @@ public class Conn {
 		try {
 			this.CancelRegister();
 			this.sc.close();
-			Server.Connmap.remove(this);
+			Server.Connmap.remove(this.sa.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
+    
 	public void DataProcess(){
+		Server.process_count ++;
 		//如果数据未满，返回继续读！
 		if(bufin.position() < 6){
 			this.ReadRegister();

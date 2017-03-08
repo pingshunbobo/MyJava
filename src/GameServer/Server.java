@@ -27,6 +27,9 @@ public class Server {
 	static Selector selector;
     static ServerSocket listensocket = null;
     static ServerSocketChannel server = null;
+    
+    //处理计数，做测试统计
+    static int process_count = 0;
 	
 	//Hash表存储核心数据
 	static HashMap< String , Conn> Connmap =
@@ -84,6 +87,7 @@ public class Server {
 					String sockstr = sock.getRemoteSocketAddress().toString();
 				    Conn newConn = new Conn(sock);
 				    Connmap.put(sockstr, newConn);
+				    
 				} else if (key.isWritable()) {
 					FindConn(key).ConnWrite();
 					
@@ -143,5 +147,9 @@ public class Server {
 			WorkThread = new Thread(new ServerThread(i));
     		WorkThread.start();
         }
+        
+        //创建一个测试统计程序。
+        WorkThread = new Thread(new CountThread());
+        WorkThread.start();
 	}
 }
