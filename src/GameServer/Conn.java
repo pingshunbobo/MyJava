@@ -49,20 +49,18 @@ public class Conn {
 		}
 		//判断返回值，注册事件
 		if( ReadBytes > 0 ){
-			//消息处理过程中，不再关注socket 读事件。
-			//这样处理会导致收不到客户端关闭的事件,产生大量CLOSE_WAIT状态。
-			//this.NoRegister();
+			this.NoRegister();
 			Server.NoticeProcesser(this);
 		} else if(ReadBytes < 0){
 			this.ConnClose();
 		}else{
-			System.out.println("buf reamain: " + this.bufin.remaining());
+			/*Debug_out("buf reamain: " + this.bufin.remaining());
 			try {
 				Thread.sleep(100000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
 		}
 		return ReadBytes;
     }
@@ -90,6 +88,7 @@ public class Conn {
 		try {
 			this.CancelRegister();
 			this.sc.close();
+			Server.Connmap.remove(this);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -97,6 +96,7 @@ public class Conn {
 	public void DataProcess(){
 		//如果数据未满，返回继续读！
 		if(bufin.position() < 6){
+			this.ReadRegister();
 			return;
 		} else if(bufin.position() >= 6){
 			this.DataEcho();

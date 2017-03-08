@@ -1,6 +1,7 @@
 package GameServer;
 
 import java.net.*;
+import java.util.Random;
 import java.io.*;
 
 public class Client {
@@ -20,17 +21,19 @@ public class Client {
 	public void work(){
 		//建立 connectCount个连接。
 		for(int i = 0; i < this.connect_times; i++){
+			System.out.println(i);
 			this.connect();
 		}
 	}
 	
+	//建立一个socket连接 
 	public void connect(){
 		try {
 			Socket conn = new Socket(serverName, port);
 			this.TalkToServer(conn);
 			conn.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
 	}
 	
@@ -52,6 +55,12 @@ public class Client {
 					in , "utf-8"));
 			
 			//System.out.println("Server says :" + br.readLine());
+			try {
+				Random random = new Random();
+				Thread.sleep(random.nextInt(65535)%10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

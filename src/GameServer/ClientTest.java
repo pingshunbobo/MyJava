@@ -7,14 +7,14 @@ public class ClientTest {
 		Thread[] WorkThread = new Thread[10];
 		System.out.println("!!!Client test start!!!!");
 
-		if(args.length != 3){
+		if(args.length != 2){
 			System.out.println("Usage: ClientTest conns times");
 			return;
 		}
 		connects = Integer.parseInt(args[0]);
 		counts = Integer.parseInt(args[1]);
 
-		//根据参数，建立连接组
+		//根据参数，建立线程组
         for(int i=0; i<10; i++){
     		WorkThread[i] = new Thread(new ClientThread(i, connects, counts));
     		WorkThread[i].start();

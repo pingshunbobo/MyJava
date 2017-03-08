@@ -59,7 +59,16 @@ public class Server {
 			System.out.println("Create bind port error!");
 			e.printStackTrace();
 		}
-
+        
+        //进入io循环服务，不再返回。
+        IOService();
+        
+        System.out.println("Can not run to here!");
+        
+	}//End of main function.
+	
+    //主线程中负责所有的io服务。 
+    private static void IOService(){
         while(true){
 			//阻塞等待。
 			SocketSelect();
@@ -69,31 +78,26 @@ public class Server {
 			
 			while(keyIterator.hasNext()) {
 				SelectionKey key = keyIterator.next();
+				
 				if(key.isAcceptable()) {
-				    //System.out.println("isAcceptable");
 					Socket sock = SocketAccept(listensocket);
 					String sockstr = sock.getRemoteSocketAddress().toString();
 				    Conn newConn = new Conn(sock);
 				    Connmap.put(sockstr, newConn);
-				    
 				} else if (key.isWritable()) {
-					synchronized(FindConn(key)){
-						FindConn(key).ConnWrite();	
-					}
+					FindConn(key).ConnWrite();
 					
 				} else if (key.isReadable()) {
-					synchronized(FindConn(key)){
-						FindConn(key).ConnRead();	
-					}
+					FindConn(key).ConnRead();
 					
 				} else{
 					//LOG.error();
 				}
 				keyIterator.remove();
 			}
-		}
-	}//End of main function.
-	
+		}// End of while
+    }
+    
 	//对select 函数的封装。
 	static void SocketSelect(){
 		try {
@@ -134,7 +138,7 @@ public class Server {
     
 	private static void ThreadPool() {
 		Thread WorkThread = null;
-		// 开启10个ServerThread线程为该客户端服务。
+		// 开启8个ServerThread线程为该客户端服务。
         for(int i = 0; i < 8; i++) {
 			WorkThread = new Thread(new ServerThread(i));
     		WorkThread.start();
